@@ -20,10 +20,16 @@ class CategoryTile extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            category.icon,
-            size: 24,
-            color: theme.colorScheme.primary,
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: Center(
+              child: Icon(
+                category.icon,
+                size: 24 * category.iconSizeScale,
+                color: theme.colorScheme.primary,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           Text(

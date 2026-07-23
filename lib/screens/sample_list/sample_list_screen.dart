@@ -59,9 +59,15 @@ class _SampleListScreenState extends State<SampleListScreen> {
   @override
   Widget build(BuildContext context) {
     final samples = _filteredSamples;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('文例一覧')),
+      appBar: AppBar(
+        title: Text(
+          '文例一覧',
+          style: theme.appBarTheme.titleTextStyle?.copyWith(fontSize: 17),
+        ),
+      ),
       body: Column(
         children: [
           Padding(
@@ -73,9 +79,13 @@ class _SampleListScreenState extends State<SampleListScreen> {
             ),
             child: TextField(
               controller: _searchController,
-              decoration: const InputDecoration(
+              style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13),
+              decoration: InputDecoration(
                 hintText: '文例を検索する',
-                prefixIcon: Icon(Icons.search, size: 20),
+                hintStyle: theme.inputDecorationTheme.hintStyle?.copyWith(
+                  fontSize: 13,
+                ),
+                prefixIcon: const Icon(Icons.search, size: 20),
               ),
             ),
           ),
@@ -109,7 +119,7 @@ class _SampleListScreenState extends State<SampleListScreen> {
                 ? Center(
                     child: Text(
                       '該当する文例が見つかりませんでした',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13),
                     ),
                   )
                 : ListView.separated(
@@ -183,6 +193,7 @@ class _CategoryTab extends StatelessWidget {
           child: Text(
             label,
             style: theme.textTheme.labelLarge?.copyWith(
+              fontSize: 13,
               color: selected ? colorScheme.onPrimary : colorScheme.onSurface,
             ),
           ),
