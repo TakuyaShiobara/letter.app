@@ -29,7 +29,7 @@ class SampleListTile extends StatelessWidget {
             ),
             child: Icon(
               sample.category.icon,
-              size: 20,
+              size: 20 * sample.category.iconSizeScale,
               color: theme.colorScheme.primary,
             ),
           ),
@@ -38,11 +38,14 @@ class SampleListTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(sample.title, style: theme.textTheme.titleMedium),
+                Text(
+                  sample.title,
+                  style: theme.textTheme.titleMedium?.copyWith(fontSize: 15),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   sample.description,
-                  style: theme.textTheme.bodySmall,
+                  style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

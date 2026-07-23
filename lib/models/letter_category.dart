@@ -34,4 +34,20 @@ enum LetterCategory {
     LetterCategory.seasonal => Icons.eco_outlined,
     LetterCategory.other => Icons.more_horiz_outlined,
   };
+
+  /// Material's outlined glyphs don't share a common optical size — some
+  /// (waving_hand, local_florist) fill their bounding box much more than
+  /// others (eco, self_improvement), so rendered at one fixed size they
+  /// visually vary in width. This scales each glyph so they read as a
+  /// consistent set; tune alongside [icon] if a glyph changes.
+  double get iconSizeScale => switch (this) {
+    LetterCategory.gratitude => 0.96,
+    LetterCategory.celebration => 0.96,
+    LetterCategory.apology => 1.15,
+    LetterCategory.sympathy => 1.0,
+    LetterCategory.greeting => 0.88,
+    LetterCategory.business => 1.03,
+    LetterCategory.seasonal => 1.2,
+    LetterCategory.other => 0.95,
+  };
 }
