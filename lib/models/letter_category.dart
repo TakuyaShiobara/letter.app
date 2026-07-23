@@ -35,19 +35,28 @@ enum LetterCategory {
     LetterCategory.other => Icons.more_horiz_outlined,
   };
 
-  /// Material's outlined glyphs don't share a common optical size — some
-  /// (waving_hand, local_florist) fill their bounding box much more than
-  /// others (eco, self_improvement), so rendered at one fixed size they
-  /// visually vary in width. This scales each glyph so they read as a
-  /// consistent set; tune alongside [icon] if a glyph changes.
+  /// Material's outlined glyphs don't share a common optical size within
+  /// their em-square — e.g. waving_hand's ink spans 470/512 units while
+  /// eco's spans only 342/512 — so rendered at one fixed `size`, some read
+  /// noticeably wider than others.
+  ///
+  /// These factors were computed from the actual glyph bounding boxes in
+  /// MaterialIcons-Regular.otf (via fontTools), normalizing every icon's
+  /// larger dimension (max of glyph width/height) to a common target:
+  ///   gratitude   448×437   celebration 459×438   apology 384×342
+  ///   sympathy    384×448   greeting    470×470   business 426×384
+  ///   seasonal    342×342   other       342×86
+  /// (Width alone isn't used as the target because sympathy's glyph is
+  /// taller than it is wide — matching only width would blow up its height
+  /// and clip it inside the tile.) Recompute if [icon] changes.
   double get iconSizeScale => switch (this) {
-    LetterCategory.gratitude => 0.96,
-    LetterCategory.celebration => 0.96,
-    LetterCategory.apology => 1.15,
-    LetterCategory.sympathy => 1.0,
-    LetterCategory.greeting => 0.88,
-    LetterCategory.business => 1.03,
-    LetterCategory.seasonal => 1.2,
-    LetterCategory.other => 0.95,
+    LetterCategory.gratitude => 0.971,
+    LetterCategory.celebration => 0.948,
+    LetterCategory.apology => 1.133,
+    LetterCategory.sympathy => 0.971,
+    LetterCategory.greeting => 0.926,
+    LetterCategory.business => 1.022,
+    LetterCategory.seasonal => 1.273,
+    LetterCategory.other => 1.273,
   };
 }
