@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:letter_app/app.dart';
@@ -12,13 +11,7 @@ void main() {
 
     expect(find.text('想いを、\n言葉に。'), findsOneWidget);
     expect(find.text('お礼'), findsWidgets);
-
-    await tester.dragUntilVisible(
-      find.text('人気の文例'),
-      find.byType(ListView),
-      const Offset(0, -200),
-    );
-    expect(find.text('人気の文例'), findsOneWidget);
+    expect(find.text('季節の便り'), findsOneWidget);
   });
 
   testWidgets('Bottom navigation switches between the three tabs', (

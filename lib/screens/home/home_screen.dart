@@ -1,23 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../data/letter_samples_data.dart';
 import '../../models/letter_category.dart';
-import '../../models/letter_sample.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/category_tile.dart';
 import '../../widgets/fade_slide_in.dart';
-import '../../widgets/sample_list_tile.dart';
-import '../../widgets/section_header.dart';
-import '../../widgets/washi_card.dart';
-import '../sample_detail/sample_detail_screen.dart';
 import '../sample_list/sample_list_screen.dart';
-
-const _popularSampleIds = [
-  'gratitude_retirement',
-  'gratitude_boss',
-  'seasonal_mothers_day',
-  'celebration_wedding_reply',
-];
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -25,9 +12,6 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final popularSamples = _popularSampleIds
-        .map((id) => letterSamples.firstWhere((s) => s.id == id))
-        .toList();
 
     return Scaffold(
       body: SafeArea(
@@ -50,45 +34,9 @@ class HomeScreen extends StatelessWidget {
               delay: const Duration(milliseconds: 100),
               child: _CategoryGrid(),
             ),
-            const SizedBox(height: AppSpacing.xl),
-            FadeSlideIn(
-              delay: const Duration(milliseconds: 140),
-              child: SectionHeader(
-                title: '人気の文例',
-                icon: Icons.auto_awesome_outlined,
-                actionLabel: 'すべて見る',
-                onActionTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SampleListScreen()),
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            FadeSlideIn(
-              delay: const Duration(milliseconds: 180),
-              child: WashiCard(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                child: Column(
-                  children: [
-                    for (var i = 0; i < popularSamples.length; i++) ...[
-                      if (i > 0) const Divider(height: 1),
-                      SampleTextRow(
-                        sample: popularSamples[i],
-                        onTap: () => _openSample(context, popularSamples[i]),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
           ],
         ),
       ),
-    );
-  }
-
-  void _openSample(BuildContext context, LetterSample sample) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => SampleDetailScreen(sample: sample)),
     );
   }
 }

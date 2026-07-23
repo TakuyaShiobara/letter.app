@@ -4,8 +4,7 @@ import '../models/letter_sample.dart';
 import 'washi_card.dart';
 
 /// A single row representing a [LetterSample] in a list — icon, title,
-/// one-line description, and a chevron. Used in the sample library and in
-/// the home screen's popular samples section.
+/// one-line description, and a chevron. Used in the sample library.
 class SampleListTile extends StatelessWidget {
   const SampleListTile({super.key, required this.sample, required this.onTap});
 
@@ -59,38 +58,6 @@ class SampleListTile extends StatelessWidget {
             color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// A compact single-line row used for the home screen's "popular" list,
-/// matching the reference design's simple text + chevron rows.
-class SampleTextRow extends StatelessWidget {
-  const SampleTextRow({super.key, required this.sample, required this.onTap});
-
-  final LetterSample sample;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(sample.title, style: theme.textTheme.bodyLarge),
-            ),
-            Icon(
-              Icons.chevron_right,
-              size: 18,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-            ),
-          ],
-        ),
       ),
     );
   }
