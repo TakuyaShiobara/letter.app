@@ -27,6 +27,7 @@ class GeminiLetterService implements LetterGenerationBackend {
   final List<String> _candidates;
 
   static const _defaultCandidates = [
+    'gemini-3.1-flash-lite',
     'gemini-flash-latest',
     'gemini-2.5-flash',
     'gemini-2.5-pro',
