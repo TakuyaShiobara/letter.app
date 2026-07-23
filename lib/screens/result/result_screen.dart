@@ -19,6 +19,8 @@ class ResultScreen extends StatefulWidget {
 }
 
 class _ResultScreenState extends State<ResultScreen> {
+  String? _lastShownError;
+
   @override
   void initState() {
     super.initState();
@@ -36,10 +38,31 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
+  void _maybeShowErrorSnackBar(LetterCreationController controller) {
+    final error = controller.errorMessage;
+    // Only surface as a transient SnackBar when a letter is already on
+    // screen (regenerate/revise failure) — the initial-generation failure
+    // gets its own full error state below instead.
+    if (error == null || error == _lastShownError || controller.generatedText == null) {
+      return;
+    }
+    _lastShownError = error;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('エラーが発生しました: $error')),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<LetterCreationController>();
     final theme = Theme.of(context);
+    _maybeShowErrorSnackBar(controller);
+
+    final hasInitialError =
+        !controller.isGenerating && controller.generatedText == null && controller.errorMessage != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -61,7 +84,18 @@ class _ResultScreenState extends State<ResultScreen> {
               Expanded(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 320),
-                  child: controller.isGenerating || controller.generatedText == null
+                  child: controller.isGenerating
+                      ? const Center(
+                          key: ValueKey('loading'),
+                          child: InkBrushLoader(),
+                        )
+                      : hasInitialError
+                      ? _ErrorState(
+                          key: const ValueKey('error'),
+                          message: controller.errorMessage!,
+                          onRetry: controller.generate,
+                        )
+                      : controller.generatedText == null
                       ? const Center(
                           key: ValueKey('loading'),
                           child: InkBrushLoader(),
@@ -111,6 +145,51 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({super.key, required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 32,
+              color: theme.colorScheme.error,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              '文章の生成に失敗しました',
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              message,
+              style: theme.textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('もう一度試す'),
+            ),
+          ],
         ),
       ),
     );

@@ -3,7 +3,8 @@ import 'package:flutter/foundation.dart';
 import '../models/letter_sample.dart';
 import '../models/recipient_type.dart';
 import '../models/writing_style.dart';
-import '../services/letter_generator_service.dart';
+import '../services/letter_generation_backend.dart';
+import '../services/letter_generation_backend_factory.dart';
 
 /// Holds the in-progress state for a single letter creation flow — from
 /// picking a recipient through to the generated (and possibly revised)
@@ -12,14 +13,15 @@ import '../services/letter_generator_service.dart';
 class LetterCreationController extends ChangeNotifier {
   LetterCreationController({
     LetterSample? referenceSample,
-    this.generator = const LetterGeneratorService(),
-  }) : _referenceSample = referenceSample {
+    LetterGenerationBackend? backend,
+  }) : _referenceSample = referenceSample,
+       backend = backend ?? createDefaultLetterGenerationBackend() {
     if (referenceSample != null) {
       _style = referenceSample.style;
     }
   }
 
-  final LetterGeneratorService generator;
+  final LetterGenerationBackend backend;
 
   RecipientType? _recipient;
   WritingStyle? _style;
@@ -27,7 +29,7 @@ class LetterCreationController extends ChangeNotifier {
   LetterSample? _referenceSample;
   String? _generatedText;
   bool _isGenerating = false;
-  int _variant = 0;
+  String? _errorMessage;
   LetterDraftRequest? _lastRequest;
 
   RecipientType? get recipient => _recipient;
@@ -36,6 +38,7 @@ class LetterCreationController extends ChangeNotifier {
   LetterSample? get referenceSample => _referenceSample;
   String? get generatedText => _generatedText;
   bool get isGenerating => _isGenerating;
+  String? get errorMessage => _errorMessage;
 
   bool get canGenerate =>
       _recipient != null && _style != null && _content.trim().isNotEmpty;
@@ -66,24 +69,24 @@ class LetterCreationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Simulates the AI generation step with a short, realistic delay so the
-  /// brush-writing loading animation has time to play.
   Future<void> generate() async {
     if (!canGenerate) return;
     _isGenerating = true;
+    _errorMessage = null;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 1800));
-
-    _variant = 0;
     _lastRequest = LetterDraftRequest(
       recipient: _recipient!,
       style: _style!,
       content: _content,
       referenceBody: _referenceSample?.body,
-      variant: _variant,
     );
-    _generatedText = generator.generate(_lastRequest!);
+
+    try {
+      _generatedText = await _withMinDelay(backend.generate(_lastRequest!));
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
     _isGenerating = false;
     notifyListeners();
   }
@@ -91,19 +94,22 @@ class LetterCreationController extends ChangeNotifier {
   Future<void> regenerate() async {
     if (_lastRequest == null) return;
     _isGenerating = true;
+    _errorMessage = null;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 1400));
-
-    _variant += 1;
-    _lastRequest = LetterDraftRequest(
-      recipient: _lastRequest!.recipient,
-      style: _lastRequest!.style,
-      content: _lastRequest!.content,
-      referenceBody: _lastRequest!.referenceBody,
-      variant: _variant,
-    );
-    _generatedText = generator.generate(_lastRequest!);
+    try {
+      final next = await _withMinDelay(backend.regenerate(_lastRequest!));
+      _lastRequest = LetterDraftRequest(
+        recipient: _lastRequest!.recipient,
+        style: _lastRequest!.style,
+        content: _lastRequest!.content,
+        referenceBody: _lastRequest!.referenceBody,
+        variant: _lastRequest!.variant + 1,
+      );
+      _generatedText = next;
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
     _isGenerating = false;
     notifyListeners();
   }
@@ -111,15 +117,27 @@ class LetterCreationController extends ChangeNotifier {
   Future<void> revise(String instruction) async {
     if (_generatedText == null || instruction.trim().isEmpty) return;
     _isGenerating = true;
+    _errorMessage = null;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 1200));
-
-    _generatedText = generator.revise(
-      currentText: _generatedText!,
-      instruction: instruction,
-    );
+    try {
+      _generatedText = await _withMinDelay(
+        backend.revise(currentText: _generatedText!, instruction: instruction),
+      );
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
     _isGenerating = false;
     notifyListeners();
+  }
+
+  /// Keeps the brush-writing loading animation visible for at least
+  /// [minDuration], regardless of how fast the backend actually responds.
+  static Future<T> _withMinDelay<T>(
+    Future<T> future, [
+    Duration minDuration = const Duration(milliseconds: 900),
+  ]) async {
+    final results = await Future.wait([future, Future.delayed(minDuration)]);
+    return results[0] as T;
   }
 }
