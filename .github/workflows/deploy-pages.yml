@@ -36,10 +36,14 @@ jobs:
       # can extract the key from the deployed bundle or network traffic, so
       # restrict it (HTTP referrer / API restrictions in Google Cloud
       # Console) rather than relying on this alone.
+      # GEMINI_MODEL is an optional repository *variable* (Settings >
+      # Secrets and variables > Actions > Variables) to switch models
+      # without a code change — e.g. if the default above is retired too.
       - run: |
           flutter build web --release \
             --base-href "/${{ github.event.repository.name }}/" \
-            --dart-define=GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
+            --dart-define=GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
+            --dart-define=GEMINI_MODEL="${{ vars.GEMINI_MODEL }}"
 
       - uses: actions/configure-pages@v5
 
