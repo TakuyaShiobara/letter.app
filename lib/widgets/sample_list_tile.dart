@@ -29,7 +29,7 @@ class SampleListTile extends StatelessWidget {
             ),
             child: Icon(
               sample.category.icon,
-              size: 20 * sample.category.iconSizeScale,
+              size: 20,
               color: theme.colorScheme.primary,
             ),
           ),
