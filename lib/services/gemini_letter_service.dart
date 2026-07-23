@@ -14,7 +14,11 @@ import 'letter_generation_backend.dart';
 /// app restrictions in Google Cloud Console) before relying on this for
 /// anything beyond a quick trial.
 class GeminiLetterService implements LetterGenerationBackend {
-  const GeminiLetterService({required this.apiKey, this.model = 'gemini-2.5-flash-lite'});
+  // gemini-2.5-flash-lite returns 404 ("no longer available to new users")
+  // for keys issued after Google retired it — gemini-2.5-flash is the
+  // current lite-tier-equivalent default; override per-deploy with
+  // --dart-define=GEMINI_MODEL if you want a specific lite/newer model.
+  const GeminiLetterService({required this.apiKey, this.model = 'gemini-2.5-flash'});
 
   final String apiKey;
   final String model;
