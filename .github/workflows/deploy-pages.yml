@@ -29,7 +29,17 @@ jobs:
       # GitHub Pages serves a project site under /<repo-name>/, so the app
       # must be built with a matching base href or every asset request
       # (main.dart.js, canvaskit, fonts, ...) 404s and the page stays blank.
-      - run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
+      #
+      # GEMINI_API_KEY is baked into the compiled JS at build time so it
+      # never sits in source control — set it under Settings > Secrets and
+      # variables > Actions. Note this is still a client-side app: anyone
+      # can extract the key from the deployed bundle or network traffic, so
+      # restrict it (HTTP referrer / API restrictions in Google Cloud
+      # Console) rather than relying on this alone.
+      - run: |
+          flutter build web --release \
+            --base-href "/${{ github.event.repository.name }}/" \
+            --dart-define=GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
 
       - uses: actions/configure-pages@v5
 

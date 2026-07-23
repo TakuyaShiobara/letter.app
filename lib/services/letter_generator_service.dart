@@ -1,36 +1,22 @@
 import '../models/recipient_type.dart';
 import '../models/writing_style.dart';
-
-/// A single request to compose a new letter.
-class LetterDraftRequest {
-  const LetterDraftRequest({
-    required this.recipient,
-    required this.style,
-    required this.content,
-    this.referenceBody,
-    this.variant = 0,
-  });
-
-  final RecipientType recipient;
-  final WritingStyle style;
-  final String content;
-  final String? referenceBody;
-
-  /// Bumped on every "re-generate" tap so the same inputs produce a
-  /// visibly different phrasing instead of an identical result.
-  final int variant;
-}
+import 'letter_generation_backend.dart';
 
 /// Assembles and revises letters from a fixed set of phrase templates.
 ///
-/// There is no network model behind this — it is a deterministic, offline
-/// stand-in that mirrors how the real generation feature will behave, so the
-/// rest of the app (loading state, result screen, revision flow) can be
-/// built and reviewed end-to-end.
-class LetterGeneratorService {
+/// This is a deterministic, offline backend — used when no Gemini API key is
+/// configured (see [LetterGenerationBackend] and `letter_generation_backend_factory.dart`)
+/// so the rest of the app (loading state, result screen, revision flow)
+/// always has something to show.
+class LetterGeneratorService implements LetterGenerationBackend {
   const LetterGeneratorService();
 
-  String generate(LetterDraftRequest request) {
+  @override
+  Future<String> generate(LetterDraftRequest request) async {
+    return _generate(request);
+  }
+
+  String _generate(LetterDraftRequest request) {
     final topic = _detectTopic('${request.content}\n${request.referenceBody ?? ''}');
     final v = request.variant;
 
@@ -54,8 +40,9 @@ class LetterGeneratorService {
   }
 
   /// Regenerates using the same inputs but the next phrasing variant.
-  String regenerate(LetterDraftRequest previous) {
-    return generate(
+  @override
+  Future<String> regenerate(LetterDraftRequest previous) async {
+    return _generate(
       LetterDraftRequest(
         recipient: previous.recipient,
         style: previous.style,
@@ -68,7 +55,8 @@ class LetterGeneratorService {
 
   /// Revises [currentText] according to a free-form or shortcut
   /// [instruction], such as "もっと感動的に" or "季節感を加える".
-  String revise({required String currentText, required String instruction}) {
+  @override
+  Future<String> revise({required String currentText, required String instruction}) async {
     final text = instruction.trim();
 
     if (_contains(text, ['最後だけ', '結びを変え', '結びだけ'])) {

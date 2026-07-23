@@ -38,6 +38,9 @@ dependencies:
   # Lightweight state management for the letter creation flow.
   provider: ^6.1.2
 
+  # REST calls to the Gemini API for letter generation/revision.
+  http: ^1.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
