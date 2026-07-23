@@ -26,7 +26,7 @@ class CategoryTile extends StatelessWidget {
             child: Center(
               child: Icon(
                 category.icon,
-                size: 30,
+                size: 30 * category.iconSizeScale,
                 color: theme.colorScheme.primary,
               ),
             ),
