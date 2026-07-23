@@ -32,7 +32,15 @@ class WashiTexture extends StatelessWidget {
               ),
             ),
           ),
-          child,
+          // Stack's default StackFit.loose lets a non-positioned child
+          // shrink-wrap its own content instead of filling the width its
+          // parent gave this widget — inside a fixed-width GridView cell
+          // that meant each card's visible border sized itself to its
+          // label's text width instead of the column width. Forcing width
+          // to fill (but leaving height alone) fixes that without risking
+          // an unbounded-height crash in the many places this card sits in
+          // a Column/ListView that sizes it to its own content height.
+          SizedBox(width: double.infinity, child: child),
         ],
       ),
     );
