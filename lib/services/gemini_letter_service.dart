@@ -14,16 +14,26 @@ import 'letter_generation_backend.dart';
 /// app restrictions in Google Cloud Console) before relying on this for
 /// anything beyond a quick trial.
 class GeminiLetterService implements LetterGenerationBackend {
-  // gemini-2.5-flash-lite returns 404 ("no longer available to new users")
-  // for keys issued after Google retired it — gemini-2.5-flash is the
-  // current lite-tier-equivalent default; override per-deploy with
-  // --dart-define=GEMINI_MODEL if you want a specific lite/newer model.
-  const GeminiLetterService({required this.apiKey, this.model = 'gemini-2.5-flash'});
+  /// If [model] is given (e.g. via `--dart-define=GEMINI_MODEL=...`), only
+  /// that model is used — an explicit choice is never silently overridden.
+  /// Otherwise this tries [_defaultCandidates] in order and sticks with
+  /// whichever first responds, since Google has been retiring specific
+  /// model versions for new API keys (flash-lite, then flash, within the
+  /// same day) faster than this list can be kept in sync by hand.
+  GeminiLetterService({required this.apiKey, String? model})
+    : _candidates = (model != null && model.isNotEmpty) ? [model] : List.of(_defaultCandidates);
 
   final String apiKey;
-  final String model;
+  final List<String> _candidates;
 
-  Uri get _endpoint => Uri.parse(
+  static const _defaultCandidates = [
+    'gemini-flash-latest',
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+    'gemini-2.0-flash',
+  ];
+
+  Uri _endpointFor(String model) => Uri.parse(
     'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey',
   );
 
@@ -70,8 +80,28 @@ $instruction
   }
 
   Future<String> _call(String prompt) async {
+    Object? lastError;
+    // Iterate over a snapshot: a successful call trims _candidates down to
+    // just the working model, so later calls in the same session don't
+    // keep re-probing ones that are known to be retired.
+    for (final model in List<String>.of(_candidates)) {
+      try {
+        final result = await _callModel(model, prompt);
+        _candidates
+          ..clear()
+          ..add(model);
+        return result;
+      } on GeminiApiException catch (e) {
+        if (!e.modelUnavailable) rethrow;
+        lastError = e;
+      }
+    }
+    throw lastError ?? const GeminiApiException('Gemini APIモデル候補が設定されていません。');
+  }
+
+  Future<String> _callModel(String model, String prompt) async {
     final response = await http.post(
-      _endpoint,
+      _endpointFor(model),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'contents': [
@@ -88,6 +118,7 @@ $instruction
     if (response.statusCode != 200) {
       throw GeminiApiException(
         'Gemini API error (${response.statusCode}): ${response.body}',
+        modelUnavailable: response.statusCode == 404,
       );
     }
 
@@ -107,9 +138,14 @@ $instruction
 }
 
 class GeminiApiException implements Exception {
-  const GeminiApiException(this.message);
+  const GeminiApiException(this.message, {this.modelUnavailable = false});
 
   final String message;
+
+  /// True for a 404 response, which for this API means "this specific
+  /// model id is retired/unknown" rather than a general failure — worth
+  /// falling through to the next candidate model instead of giving up.
+  final bool modelUnavailable;
 
   @override
   String toString() => message;
